@@ -1,0 +1,23 @@
+<ion-list no-padding no-margin>
+    <ion-list-header color="dark">
+      <ion-label class="fw700">Unconfirmed Task</ion-label>
+    </ion-list-header>
+    <ion-item-sliding *ngFor= " let task of _tasks;let i = index" (ionSwipe)="delete(task)" #slidingItem>
+      <ion-item *ngIf = "task.taskConfirm == false">
+        <ion-grid>
+          <ion-row>
+              <ion-label class = "text-title">
+                  {{task.title}}
+             </ion-label>
+          </ion-row>
+           <ion-row>
+              <span class = "text-date">{{task.startTime}}</span>
+           </ion-row>
+        </ion-grid>
+      <ion-item-options>
+          <ion-button expandable (click)="delete(task)" small>D</ion-button>
+          <ion-button expandable (click)="confirm(task)" small>C</ion-button>
+       </ion-item-options>
+  </ion-item>
+  </ion-item-sliding>
+</ion-list>

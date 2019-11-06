@@ -1,0 +1,146 @@
+<!--  home.html -->
+<!--  Show the chatbot UI -->
+<script>$scope.date = '20140313T00:00:00';
+</script>
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Dialogflow</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content padding class="contentBg" #content id="chat-parent" overflow-scroll="true" (ionScrollStart)="logScrollStart()"  (ionScroll)="logScrolling($event)">
+  <div id="chat-container">
+      <span class="line-style"></span>
+      <hr>
+      <div class="message-wrap">
+<!---<div *ngFor = "let tasks of _tasks">
+  <p>{{tasks.Name}}</p>
+</div>-->
+  <div *ngFor="let message of messages" class="message">   
+      <div class="message-right" *ngIf ="message.from =='user'" >
+            <div class="msg-detail">
+                <div class="msg-info">
+                  </div>
+                <div class="msg-content">
+                   <p class="line-breaker"  autolinker>{{message.text}}</p>
+                </div>
+            <hr>
+            <div class ="msg-date">
+                <span>{{message.when | date:'dd/MM hh:MM'}}</span>
+            </div>
+            </div>
+          </div>
+      <div class="message-left" *ngIf="message.from == 'bot' " >
+        <img class="user-img" [src]="message.avatar">
+          <div class="msg-detail">
+              <div class="msg-content">
+                <p class="message" [innerHTML]="message.text" autolinker></p>
+              </div>
+              <hr>
+              <div class ="msg-date">
+                  <span>{{message.when | date:'dd/MM hh:MM'}}</span>
+              </div>
+        </div>
+    </div>
+    <div class="cf"></div>
+  </div>
+  <div *ngIf="isLoading" class="bot-loading-container">
+    <ion-spinner name="dots"></ion-spinner>
+    </div>
+  </div>
+</div>
+</ion-content>
+  
+    <div>
+<ion-fab color="warning" class = "not-confirm" vertical="center" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="presentPopover($event)">
+      {{uc_counthtml.length}} 
+    </ion-fab-button>
+  </ion-fab>
+    </div>
+<div class = "choice-button" >
+    <ion-grid>
+      <ion-row>
+        <ion-col>
+            <ion-button (click) = "presentModal()">Open Calender</ion-button>
+        </ion-col>
+        <ion-col >
+          <ion-button (click)="showTask()">Show Task</ion-button>
+        </ion-col>
+      </ion-row>
+      <!--Hidden form for user to add tasks when add task button is clicked-->
+    <div *ngIf="!hiddenButton">
+      <ion-grid>
+			<ion-row>
+				<ion-col size = 6>
+						<ion-item>
+								<ion-input placeholder="Title" type = "text" [(ngModel)]= "event.title"></ion-input>  
+						</ion-item>
+				</ion-col>
+				<ion-col size = 1>
+						<ion-checkbox [(ngModel)]="event.taskConfirm" color="danger"></ion-checkbox>
+
+				</ion-col>
+			<ion-col>
+					<ion-item>
+						<ion-label>Task Type</ion-label>
+						<ion-select [(ngModel)] = "event.tasktype" >
+							<ion-select-option  *ngFor="let tasktype of taskType"     [value]="tasktype">{{tasktype.name}}</ion-select-option>
+						</ion-select>
+					</ion-item>
+				</ion-col>
+			</ion-row>
+			<ion-row>
+				<ion-col>
+				<ion-item>
+						<ion-textarea placeholder="Notes" [(ngModel)]="event.notes" ></ion-textarea>
+				</ion-item>
+			</ion-col>
+			<ion-col>
+				<ion-row>
+						<ion-item>
+								<ion-label>Start</ion-label>
+								<ion-datetime  displayFormat="MM/DD/YYYY HH:mm" pickerFormat="MMM D:HH:mm" [(ngModel)]="event.startTime" ></ion-datetime>
+							</ion-item>
+				</ion-row>
+				<ion-row>
+						<ion-item>
+								<ion-label>End</ion-label>
+								<ion-datetime  displayFormat="MM/DD/YYYY HH:mm" pickerFormat="MMM D:HH:mm" [(ngModel)]="event.endTime" ></ion-datetime>
+							</ion-item>
+				</ion-row>
+			</ion-col>
+			</ion-row>
+			<ion-row>
+				<ion-col>
+				</ion-col>
+			</ion-row>
+				<ion-row>
+						<ion-col>
+
+						</ion-col>
+						<ion-col>
+								<ion-button (click)="addTask()">Submit</ion-button>
+
+						</ion-col>
+						<ion-col>
+								<ion-label>{{event.startTime}}</ion-label>
+
+						</ion-col>
+					</ion-row>
+	</ion-grid>
+    </div>
+        <!--------------------------------------------------------------------->
+    </ion-grid>
+  </div>
+
+<ion-footer>
+  <form [formGroup]="messageForm" (submit)="sendMessage(chatBox)" novalidate>
+    <ion-item>
+      <ion-input formControlName="message" (click) = "disableSomething()" [(ngModel)]="chatBox" placeholder="Send a message..."></ion-input>
+      <button ion-button clear (click)="sendMessage(chatBox)" item-end>
+        <ion-icon class="footer-btn" name="send"></ion-icon>
+      </button>
+    </ion-item>
+  </form>
+</ion-footer>

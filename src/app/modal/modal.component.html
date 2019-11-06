@@ -1,0 +1,114 @@
+<ng-template #template let-showEventDetail="showEventDetail" let-selectedDate="selectedDate" let-noEventsLabel="noEventsLabel">
+    <ion-list class="event-detail-container" has-bouncing="false" *ngIf="showEventDetail" overflow-scroll="false">
+        <ion-item *ngFor="let events of selectedDate?.events" (click)="onEventSelected(event)" text-wrap>
+            <ion-grid>	
+          <ion-row>
+          <span  class="monthview-eventdetail-timecolumn">
+        [{{events.taskConfirm}}] {{events.startTime|date: 'HH:mm'}} - {{events.endTime|date: 'HH:mm'}}
+            </span>
+        <span class="event-detail"> : | {{events.title}} </span>
+      </ion-row>
+      <ion-row>
+          <span *ngIf = "events.notes != '' ">[Notes] = {{events.notes}} </span>
+        </ion-row>
+      </ion-grid>
+      </ion-item>
+      <ion-item *ngIf="selectedDate?.events.length==0">
+              <div class="no-events-label">{{noEventsLabel}}            
+        </div>
+      </ion-item>
+      <ion-grid>
+          <div  *ngIf = "eventButton == true" [hidden]="false">
+        <ion-row>
+          <ion-col size = 6>
+              <ion-item>
+                  <ion-input placeholder="Title" type = "text" [(ngModel)]= "event.title"></ion-input>  
+              </ion-item>
+          </ion-col>
+          <ion-col size = 1>
+              <ion-checkbox [(ngModel)]="event.taskConfirm" color="danger"></ion-checkbox>
+  
+          </ion-col>
+        <ion-col>
+            <ion-item>
+              <ion-label>Task Type</ion-label>
+              <ion-select [(ngModel)]= "event.tasktype">
+                <ion-select-option (ionSelect)="optionSelected($event)" *ngFor="let tasktype of taskType" [value]="tasktype">{{tasktype.name}}</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+          <ion-item>
+              <ion-textarea placeholder="Notes" [(ngModel)]="event.notes" ></ion-textarea>
+          </ion-item>
+        </ion-col>
+        <ion-col>
+          <ion-row>
+              <ion-item>
+                  <ion-label>Start</ion-label>
+                  <ion-datetime  displayFormat="MM/DD/YYYY HH:mm" pickerFormat="MMM D:HH:mm" [(ngModel)]="event.startTime" [min]="minDate"></ion-datetime>
+                </ion-item>
+          </ion-row>
+          <ion-row>
+              <ion-item>
+                  <ion-label>End</ion-label>
+                  <ion-datetime  displayFormat="MM/DD/YYYY HH:mm" pickerFormat="MMM D:HH:mm" [(ngModel)]="event.endTime" [min]="minDate"></ion-datetime>
+                </ion-item>
+          </ion-row>
+        </ion-col>
+        </ion-row>
+        <ion-row>
+        
+        </ion-row>
+          <ion-row>
+              <ion-col>
+  
+              </ion-col>
+              <ion-col>
+                  <ion-button (click)="addTask()">Submit</ion-button>
+  
+              </ion-col>
+              <ion-col>
+                  <ion-label>{{event.startTime}}</ion-label>
+  
+              </ion-col>
+            </ion-row>
+      </div>
+    </ion-grid>
+    </ion-list>
+  </ng-template>
+  
+  
+  
+  <ion-header>
+    <ion-toolbar color="primary">
+      <ion-title>{{viewTitle}}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  
+  <ion-content class="has-header">    
+    <ion-row ion-content>
+      <ion-col col-9>
+              
+              <ion-button end ion-button small [disabled]="isToday" (click)="today()" >Today</ion-button>
+              <ion-button ion-button small (click)="addEvent()">ADD EVENT</ion-button>
+  
+      </ion-col>
+      <ion-col col-3>
+        <ion-select [(ngModel)]="calendar.mode" style="max-width: 100%">
+          <ion-select-option (ionSelect)="onOptionSelected($event)" *ngFor="let mode of calendarModes" [value]="mode.key">{{mode.value}}
+          </ion-select-option>
+        </ion-select>
+      </ion-col>
+    </ion-row>
+    <!-- <p>{{selectedObject | json}}</p>
+          <p>{{eventSource | json}}</p> -->
+    <calendar 
+    [monthviewEventDetailTemplate]="template"
+    [eventSource]="eventSource" [markDisabled]="markDisabled" [calendarMode]="calendar.mode" [currentDate]="calendar.currentDate"
+     (onCurrentDateChanged)="onCurrentDateChanged($event)" (onEventSelected)="onEventSelected($event)" (onTitleChanged)="onViewTitleChanged($event)"
+     (onTimeSelected)="onTimeSelected($event)"  step="30">
+    </calendar>
+  </ion-content>

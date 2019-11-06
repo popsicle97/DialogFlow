@@ -1,0 +1,7 @@
+{
+  "name": "RealChat",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "angular"
+}

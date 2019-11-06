@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "370737796659",
+    "firebase_url": "https://bot-eqvemq.firebaseio.com",
+    "project_id": "bot-eqvemq",
+    "storage_bucket": "bot-eqvemq.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370737796659:android:7f8146f7889fe6c6f43546",
+        "android_client_info": {
+          "package_name": "io.ionic.starter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "370737796659-5te426hfdgbur0df7iv17oc8do0lhdhr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2wcsFHvPwKlC81_-oDo_AOiQTUlLwsOM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "370737796659-0ni399ldgh7vads7r9v9l313bsi0kgot.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
