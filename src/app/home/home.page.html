@@ -1,6 +1,11 @@
 <!--  home.html -->
 <!--  Show the chatbot UI -->
 <script>$scope.date = '20140313T00:00:00';
+    document.addEventListener('deviceready', function () {
+            cordova.plugins.backgroundMode.enable();
+
+          }, false);
+
 </script>
 <ion-header>
   <ion-toolbar>
@@ -52,6 +57,17 @@
 </ion-content>
   
     <div>
+        <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+            <ion-fab-button>
+              <ion-icon *ngIf = "uc_counthtml.length > 0" name="alert"></ion-icon>
+              <ion-icon *ngIf = "uc_counthtml.length == 0" name="code"></ion-icon>
+            </ion-fab-button>
+            <ion-fab-list side="start">
+                <ion-fab-button (click)="presentPopover($event)">{{uc_counthtml.length}}<ion-icon name="help-circle"></ion-icon></ion-fab-button>
+                <ion-fab-button>I<ion-icon name="information-circle"></ion-icon></ion-fab-button>
+                <ion-fab-button>R<ion-icon name="fitness"></ion-icon></ion-fab-button>
+              </ion-fab-list>
+          </ion-fab>
 <ion-fab color="warning" class = "not-confirm" vertical="center" horizontal="end" slot="fixed">
     <ion-fab-button (click)="presentPopover($event)">
       {{uc_counthtml.length}} 

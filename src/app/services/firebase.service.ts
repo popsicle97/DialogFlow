@@ -34,7 +34,7 @@ export class FirebaseService {
     updateTask(tasksID,tasks){
         this.db.doc('task/' + tasksID).update(tasks);
     }
-
+    
     deleteTask(tasksID){
       this.db.doc('task/' + tasksID).delete();
     }

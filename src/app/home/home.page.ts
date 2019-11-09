@@ -11,6 +11,7 @@ import { Message, BotMessage} from '../chat/models/messages';
 import { NotificationsComponent } from '../notifications/notifications.component';
 import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
 import { analytics } from 'firebase';
+import { BackgroundMode } from '@ionic-native/background-mode/ngx';
 
 @Component({
   selector: 'app-home',
@@ -59,15 +60,18 @@ todays_task : any = [];
     { "id": 2, "name": "Important" }
 ];
 
-  constructor(private localNotifications: LocalNotifications,
+  constructor(public backgroundMode: BackgroundMode,private localNotifications: LocalNotifications,
     public popoverController: PopoverController, 
     public modalController: ModalController, 
     public platform: Platform, 
     public formBuilder: FormBuilder,   
     private router: Router, 
-    public firebaseService: FirebaseService) 
+    public firebaseService: FirebaseService,
+    ) 
   
     { 
+    
+ 
     this.chatBox = '';
     console.log(VERSION.full); 
     console.log(VERSION.full); 
@@ -83,7 +87,8 @@ todays_task : any = [];
   }
 
   ngOnInit() {
-    
+   
+    this.backgroundMode.enable();
     let id = 0;
     this.firebaseService.viewTask().subscribe(result => {
       this._tasks = result.map( e => {
@@ -99,26 +104,37 @@ todays_task : any = [];
         };
       })
 
-      
-      console.log(this._tasks);
+     
       let uc_count = [];
       let imp_count = [];
+      let todays_count =[];
+      let rout_task = [];
+
       for(let t of this._tasks){
         let getDate_fb = new Date(moment(t.startTime).format()),
-              month = getDate_fb.getMonth() + 1,
-              day = getDate_fb.getDate(),
-                year = getDate_fb.getFullYear()
+            month = getDate_fb.getMonth() + 1,
+            day = getDate_fb.getDate(),
+            year = getDate_fb.getFullYear(),
+            hour = getDate_fb.getHours(),
+            minute = getDate_fb.getMinutes()
+
 
         let getDate_fb_et = new Date(moment(t.endTime).format()),
                 month_et = getDate_fb_et.getMonth() + 1,
                 day_et = getDate_fb_et.getDate(),
-                  year_et = getDate_fb_et.getFullYear()
+                  year_et = getDate_fb_et.getFullYear(),
+                  hour_et = getDate_fb_et.getHours(),
+                  minute_et= getDate_fb.getMinutes()
+
   
         let now = new Date()
         let getDate_now = new Date(moment(now).format()),
               month_nw = getDate_now.getMonth() + 1,
               day_nw = getDate_now.getDate(),
-              year_nw = getDate_now.getFullYear()
+              year_nw = getDate_now.getFullYear(),
+              hour_nw = getDate_now.getHours(),
+              minute_nw = getDate_fb.getMinutes()
+
 
         console.log("get todays date")
         console.log(day_nw + "/"+ month_nw + "/" + year_nw);
@@ -126,33 +142,49 @@ todays_task : any = [];
         let combined_date = day+"/"+month+"/"+year;
         let combined_date_now = day_nw + "/"+ month_nw + "/" + year_nw
         let combined_date_et = day_et + "/" + month_et + "/" + year_et
+        let combined_hour_now  =  hour_nw
+        let combined_hour_et = hour_et
+
         var date_fb = moment(combined_date,"DD/MM/YYYY");
         var date_today= moment(combined_date_now,"DD/MM/YYYY");
         var date_et = moment(combined_date_et, "DD/MM/YYYY");
+        var hour_now = moment(combined_hour_now, "HH");
+        var hour_ets = moment(combined_hour_et, "HH")
         let date_diff = date_fb.diff(date_today,'days')
         let date_diff_delete = date_et.diff(date_today,'days')
+        let hour_diff = hour_ets.diff(hour_now,'hour');
         console.log("DATE_DIFF_DELETE")
         console.log(date_diff_delete)
+        console.log(hour_diff)
+        let task = {}
+        if(t.taskType === "routine" && date_diff_delete === 0 && hour_diff <= 0){
+          rout_task.push(t)
+          for(let r_task of rout_task){
+            if(r_task.id === t.id){
+                console.log("TESTINGGG")
+                console.log(moment(r_task.startTime).add(7,'days').format())
+                console.log(moment(r_task.endTime).add(7,'days').format())
+                task['startTime'] = moment(r_task.startTime).add(7,'days').format()
+                task['endTime'] = moment(r_task.endTime).add(7,'days').format()
+                console.log(task)
+                this.firebaseService.updateTask(r_task.id, task);
+            }
+          }
+      }
         if(date_diff_delete < 0){
           console.log(date_diff_delete)
           console.log("Auto Deleting expired task")
           this.firebaseService.deleteTask(t.id)
         }
         if(combined_date == combined_date_now){
-          this.todays_task.push(t)
+          todays_count.push(t)
       }
       console.log("todays task")
-        console.log(this.todays_task)
    
         if(date_diff <=7 &&date_diff >=0){
           if(t.taskType == "important"){
             console.log("-------Important Task---------")
-        /*    console.log(t.title + t.startTime)
-            console.log("Days left " + date_diff)
-            console.log(imp_count)
-            console.log(Math.min(date_diff));*/
             imp_count.push(t)
-
           }
         }
         if(t.taskConfirm == false){
@@ -164,15 +196,7 @@ todays_task : any = [];
       this.uc_counthtml = uc_count
       this.imp_counthtml = imp_count
    
-      
-          this.todays_task.forEach(task => {
-            id++
-            this.localNotify(
-              id,
-              "You have a task to tend to today Amery.",
-              "Task " + "'" + task.title + "'" + " at " + task.startTime
-              )
-            });
+ 
 
       this.addBotMessage("Boss, you have "+ uc_count.length + " unconfirmed task and " + imp_count.length + " important task");
       for(let imp of imp_count){
@@ -185,9 +209,26 @@ todays_task : any = [];
         this.addBotMessage(" An important task " + " '" + imp.title + "' "+ " at " + time  + " on " + day + "/" + month + "/" + year) ;
       }
     
-   
-    });
+       
+      todays_count.forEach(task => {
+        this.backgroundMode.moveToForeground()
 
+        if(id <= todays_count.length){
+
+          this.localNotify(
+            id,
+            "You have a task to tend to today Amery.",
+            "Task " + "'" + task.title + "'" + " at " + task.startTime
+            )
+        }
+        id++
+        console.log(id)
+        console.log(task)
+
+        });
+    });
+     
+   
 
   }
 
@@ -201,7 +242,6 @@ todays_task : any = [];
       lockscreen: true,
       foreground: true,
       vibrate: true,
-      sticky: true
     });
   }
 
@@ -1024,9 +1064,8 @@ todays_task : any = [];
         }
       else if(response.result.metadata.intentName == "task.add.create"){
         let agentTask : any;
-      
+       
         console.log(response)
-        this.addBotMessage(response.result.fulfillment.speech)
         const task_name = response.result.parameters.task_name;
         let task_status ;
         const start_date = response.result.parameters.start_date.toString();
@@ -1054,6 +1093,18 @@ todays_task : any = [];
         console.log(dateTime_end.format())
         var dt_start = dateTime_start.format();
         var dt_end = dateTime_end.format();
+        var date_now = moment(new Date());
+        console.log("DATE NOW")
+        console.log(date_now.format())
+        console.log(dateTime_start.format())
+        console.log(moment(dateTime_start, "YYYY-MM-DD").diff(moment(date_now,"YYYY-MM-DD"),'days'))
+        var date_start_now_difference = moment(dateTime_start, "YYYY-MM-DD").diff(moment(date_now,"YYYY-MM-DD"),'days')
+        var timeH_start_now_difference = moment(dateTime_start, "HH-mm").diff(moment(date_now,"HH-mm"),'hours')
+        var timeM_start_now_different = moment(dateTime_start, "HH-mm").diff(moment(date_now,"HH-mm"),'minutes')
+        console.log(date_start_now_difference)
+        console.log(timeH_start_now_difference)
+        console.log(timeM_start_now_different)
+        console.log(this._tasks);
         let task = {
           title:response.result.parameters.task_name,
           notes: response.result.parameters.task_notes,
@@ -1064,7 +1115,7 @@ todays_task : any = [];
       }
 
         console.log(dt_start)
-       
+      
       for(let tasks of this._tasks){
 
         if(dt_start == tasks.startTime){
@@ -1092,28 +1143,30 @@ todays_task : any = [];
         task.endTime = dt_start;
       }
       agentTask = task;
-
+    if(date_start_now_difference === 0 && !(timeH_start_now_difference < 0)  && !(timeM_start_now_different  < 0)){
       if(task_same_date.length <= 0){
         task_status = response.result.parameters.task_status;
-        console.log("There is no task at that time")
-        task_status = true;
+        //task_status = true;
        if(task_status != "" && task_name != ""){
-        if(task.taskConfirm == "true" || task_status ==true){
+        if(task.taskConfirm == "true" ){
               task.taskConfirm = true;
-              console.log("its true")
-              console.log("Its true and added to FB")
+          
               this.addtoDB(agentTask)
+              this.addBotMessage(response.result.fulfillment.speech)
               }else{
             task.taskConfirm = false;
-            console.log("its false")
-            console.log("Its false and added to FB")
             this.addtoDB(agentTask);
+            this.addBotMessage(response.result.fulfillment.speech)
+
             }
        }
     }else{
       task_status = "";
       this.addBotMessage("There is already a task occupying that time and date. Would you still want to add it?")
     }
+  }else if(date_start_now_difference <= 0 && (timeH_start_now_difference < 0)  && (timeM_start_now_different  < 0)){
+    this.addBotMessage("You cannot go back to time and add a class. Try again.")
+  }
         console.log(task);
       }
       else if (response.result.metadata.intentName =="task.add.yes-confirm"){
@@ -1143,6 +1196,7 @@ todays_task : any = [];
         console.log(dateTime_end.format())
         var dt_start = dateTime_start.format();
         var dt_end = dateTime_end.format();
+        
         let task = {
           title:response.result.parameters.task_name,
           notes: response.result.parameters.task_notes,

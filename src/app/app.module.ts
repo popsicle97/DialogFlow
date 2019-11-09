@@ -15,6 +15,7 @@ import { NotificationsComponent } from './notifications/notifications.component'
 import { ModalComponent } from './modal/modal.component';  // <-- don't forget to import the AddEventModule class
 import { NgCalendarModule } from 'ionic2-calendar';
 import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
+import { BackgroundMode } from '@ionic-native/background-mode/ngx';
 
 
 @NgModule({
@@ -33,6 +34,7 @@ import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
 
   ],
   providers: [
+    BackgroundMode,
     StatusBar,
     SplashScreen,
     LocalNotifications ,

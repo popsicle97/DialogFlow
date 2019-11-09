@@ -21,6 +21,7 @@
     "@angular/platform-browser": "~8.1.2",
     "@angular/platform-browser-dynamic": "~8.1.2",
     "@angular/router": "~8.1.2",
+    "@ionic-native/background-mode": "^5.16.0",
     "@ionic-native/core": "^5.0.0",
     "@ionic-native/fcm": "^5.15.1",
     "@ionic-native/local-notifications": "^5.16.0",
@@ -30,6 +31,7 @@
     "api-ai-javascript": "^2.0.0-beta.21",
     "cordova-android": "8.1.0",
     "cordova-browser": "6.0.0",
+    "cordova-plugin-background-mode": "git+https://github.com/katzer/cordova-plugin-background-mode.git",
     "cordova-plugin-badge": "^0.8.8",
     "cordova-plugin-fcm-with-dependecy-updated": "^4.1.0",
     "cordova-plugin-local-notification": "^0.9.0-beta.2",
@@ -93,7 +95,8 @@
         "GRADLE_TOOLS_VERSION": "3.5.0",
         "GOOGLE_SERVICES_VERSION": "4.2.0"
       },
-      "cordova-plugin-local-notification": {}
+      "cordova-plugin-local-notification": {},
+      "cordova-plugin-background-mode": {}
     },
     "platforms": [
       "browser",
