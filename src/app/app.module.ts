@@ -16,6 +16,7 @@ import { ModalComponent } from './modal/modal.component';  // <-- don't forget t
 import { NgCalendarModule } from 'ionic2-calendar';
 import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
 import { BackgroundMode } from '@ionic-native/background-mode/ngx';
+import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
 
 
 @NgModule({
@@ -37,6 +38,8 @@ import { BackgroundMode } from '@ionic-native/background-mode/ngx';
     BackgroundMode,
     StatusBar,
     SplashScreen,
+    SpeechRecognition,
+
     LocalNotifications ,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     {provide: FirestoreSettingsToken,useValue:{}}

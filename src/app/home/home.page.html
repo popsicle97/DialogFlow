@@ -57,7 +57,7 @@
 </ion-content>
   
     <div>
-        <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab  class = "not-confirm" vertical="center" horizontal="end" slot="fixed">
             <ion-fab-button>
               <ion-icon *ngIf = "uc_counthtml.length > 0" name="alert"></ion-icon>
               <ion-icon *ngIf = "uc_counthtml.length == 0" name="code"></ion-icon>
@@ -68,11 +68,11 @@
                 <ion-fab-button>R<ion-icon name="fitness"></ion-icon></ion-fab-button>
               </ion-fab-list>
           </ion-fab>
-<ion-fab color="warning" class = "not-confirm" vertical="center" horizontal="end" slot="fixed">
+   <!---<ion-fab color="warning" class = "not-confirm" vertical="center" horizontal="end" slot="fixed">
     <ion-fab-button (click)="presentPopover($event)">
       {{uc_counthtml.length}} 
     </ion-fab-button>
-  </ion-fab>
+  </ion-fab>-->
     </div>
 <div class = "choice-button" >
     <ion-grid>
@@ -153,6 +153,9 @@
 <ion-footer>
   <form [formGroup]="messageForm" (submit)="sendMessage(chatBox)" novalidate>
     <ion-item>
+        <button ion-button clear (click)="talk()" item-end>
+            <ion-icon name="mic"></ion-icon>
+          </button>
       <ion-input formControlName="message" (click) = "disableSomething()" [(ngModel)]="chatBox" placeholder="Send a message..."></ion-input>
       <button ion-button clear (click)="sendMessage(chatBox)" item-end>
         <ion-icon class="footer-btn" name="send"></ion-icon>

@@ -25,6 +25,8 @@
     "@ionic-native/core": "^5.0.0",
     "@ionic-native/fcm": "^5.15.1",
     "@ionic-native/local-notifications": "^5.16.0",
+    "@ionic-native/native-audio": "^5.16.0",
+    "@ionic-native/speech-recognition": "^5.16.0",
     "@ionic-native/splash-screen": "^5.0.0",
     "@ionic-native/status-bar": "^5.0.0",
     "@ionic/angular": "^4.7.1",
@@ -35,6 +37,8 @@
     "cordova-plugin-badge": "^0.8.8",
     "cordova-plugin-fcm-with-dependecy-updated": "^4.1.0",
     "cordova-plugin-local-notification": "^0.9.0-beta.2",
+    "cordova-plugin-nativeaudio": "^3.0.9",
+    "cordova-plugin-speechrecognition": "^1.2.0",
     "cordova-support-google-services": "^1.3.2",
     "core-js": "^2.5.4",
     "firebase": "^7.2.2",
@@ -96,7 +100,9 @@
         "GOOGLE_SERVICES_VERSION": "4.2.0"
       },
       "cordova-plugin-local-notification": {},
-      "cordova-plugin-background-mode": {}
+      "cordova-plugin-background-mode": {},
+      "cordova-plugin-speechrecognition": {},
+      "cordova-plugin-nativeaudio": {}
     },
     "platforms": [
       "browser",

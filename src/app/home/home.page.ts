@@ -12,6 +12,8 @@ import { NotificationsComponent } from '../notifications/notifications.component
 import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
 import { analytics } from 'firebase';
 import { BackgroundMode } from '@ionic-native/background-mode/ngx';
+import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
+import { match } from 'minimatch';
 
 @Component({
   selector: 'app-home',
@@ -44,7 +46,7 @@ sessionId = Math.random().toString(36).slice(-5);
 uc_counthtml: any= [];
 imp_counthtml : any = [];
 todays_task : any = [];
-
+voice : string = ' '
   event= {
     title : "",
     notes : "",
@@ -67,15 +69,19 @@ todays_task : any = [];
     public formBuilder: FormBuilder,   
     private router: Router, 
     public firebaseService: FirebaseService,
+    private speechRecognition: SpeechRecognition
     ) 
   
     { 
     
- 
+   // Check feature available
+this.speechRecognition.isRecognitionAvailable()
+.then((available: boolean) => console.log(available))
+
     this.chatBox = '';
     console.log(VERSION.full); 
     console.log(VERSION.full); 
-    
+   
     this.messageForm = formBuilder.group({
       message: new FormControl('')
     });
@@ -87,9 +93,23 @@ todays_task : any = [];
   }
 
   ngOnInit() {
-   
+
     this.backgroundMode.enable();
-    let id = 0;
+
+    this.speechRecognition.hasPermission()
+    .then((hasPermission: boolean) => {
+
+      if (!hasPermission) {
+      this.speechRecognition.requestPermission()
+        .then(
+          () => console.log('Granted'),
+          () => console.log('Denied')
+        )
+      }
+
+   });
+
+
     this.firebaseService.viewTask().subscribe(result => {
       this._tasks = result.map( e => {
         return {
@@ -198,7 +218,6 @@ todays_task : any = [];
    
  
 
-      this.addBotMessage("Boss, you have "+ uc_count.length + " unconfirmed task and " + imp_count.length + " important task");
       for(let imp of imp_count){
         let timeStart = new Date(moment(imp.startTime).format()),
             month = timeStart.getDate(),
@@ -209,30 +228,57 @@ todays_task : any = [];
         this.addBotMessage(" An important task " + " '" + imp.title + "' "+ " at " + time  + " on " + day + "/" + month + "/" + year) ;
       }
     
+      let id = 0;
+
        
       todays_count.forEach(task => {
-        this.backgroundMode.moveToForeground()
-
-        if(id <= todays_count.length){
-
-          this.localNotify(
-            id,
-            "You have a task to tend to today Amery.",
-            "Task " + "'" + task.title + "'" + " at " + task.startTime
-            )
-        }
         id++
+
+        console.log(todays_count)
+        if(id <= todays_count.length){
+          if(task.taskType == "important" ){
+            this.backgroundMode.moveToForeground()
+            console.log("TODAY IMPORTANT")
+            this.localNotify(
+              id,
+              "!IMPORTANT task to tend to today.",
+              "Task " + "'" + task.title + "'" + " at " + task.startTime,
+              1
+              )
+            console.log(task)
+            
+          }
+          if(task.taskType == "normal"){
+            this.localNotify(
+              id,
+              "You have a task to tend to today Amery.",
+              "Task " + "'" + task.title + "'" + " at " + task.startTime,
+              -2
+              )
+          }
+        
+          if(task.taskType =="routine"){
+            this.localNotify(
+              id,
+              "There is a routine task today.",
+              "Task " + "'" + task.title + "'" + " at " + task.startTime,
+              -1
+              )
+          }
+        }
         console.log(id)
         console.log(task)
 
         });
+        this.addBotMessage("Boss, you have "+ uc_count.length + " unconfirmed task and " + imp_count.length + " important task");
+
     });
      
    
 
   }
 
-  localNotify(id,title,text) {
+  localNotify(id,title,text, priority) {
     this.localNotifications.schedule({
       id : id,
       title: title ,
@@ -242,6 +288,7 @@ todays_task : any = [];
       lockscreen: true,
       foreground: true,
       vibrate: true,
+      priority : priority
     });
   }
 
@@ -334,9 +381,28 @@ todays_task : any = [];
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
 
+  talk( ){
+    this.speechRecognition.startListening()
+    .subscribe(
+      (matches: Array<string>) => {
+      //  this.sendMessage(matches[0])
+        console.log(matches[0])
+        this.voice = matches[0]
+        this.sendMessage(this.voice.toString())
+
+      },
+      
+      (onerror) => console.log('error:', onerror)
+      
+      )
+      
+
+  }
+
 
   sendMessage(req: string) 
   {
+   
     let task_same_date : any = [ ];
     if (!req || req === '') {
       return;
@@ -1035,14 +1101,14 @@ todays_task : any = [];
                 let datesStart = new Date(task_st.startTime).toLocaleTimeString();
                 let datesEnd= new Date(task_st.endTime).toLocaleTimeString();
 
-                task_arr.push("\n</br>[Title] : " +  task_st.title + "\n</br> [Start Time] "+ datesStart + "\n</br> [End Time] "+ datesEnd +"\n")
+                task_arr.push("\n</br>[Title] : " +  task_st.title + " [Start Time] "+ datesStart + " [End Time] "+ datesEnd )
               } 
               if(a_getDate == b_getDate && c_time == "Invalid Date"){
                 console.log(task_st.title)
                 console.log("Second Cond")
                 let datesStart = new Date(task_st.startTime).toLocaleTimeString();
                 let datesEnd= new Date(task_st.endTime).toLocaleTimeString();
-                task_arr.push("\n</br>[Title] : " +  task_st.title + "\n</br> [Start Time] "+ datesStart + "\n</br> [End Time] "+ datesEnd +"\n")
+                task_arr.push("\n</br>[Title] : " +  task_st.title + " [Start Time] "+ datesStart + " [End Time] "+ datesEnd )
               }
             }
             if(task_arr.length==0){
