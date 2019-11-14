@@ -4,6 +4,7 @@ import * as moment from 'moment';
 import { AlertController } from '@ionic/angular';
 import { CalendarComponent } from 'ionic2-calendar/calendar';
 import { ModalController, NavController, ActionSheetController } from '@ionic/angular';
+import { Storage } from '@ionic/storage';
 
 @Component({
   selector: 'app-modal',
@@ -18,7 +19,8 @@ export class ModalComponent implements OnInit {
   taskD: any;
   eventButton : boolean = false;
   getSelectedTime = Date();
-
+  user_details :any = [];
+  task_pre_pop : any = []
   public press: number = 0;
 
   event= {
@@ -36,20 +38,60 @@ export class ModalComponent implements OnInit {
   minDate = new Date().toISOString();
 
  
+  
+  
+  selectedDay = new Date()
+  sd : any;
+  selectedObject
+  eventSource = []
+  viewTitle;
+  isToday: boolean;
+  calendarModes = [
+    { key: 'month', value: 'Month' },
+    { key: 'week', value: 'Week' },
+    { key: 'day', value: 'Day' },
+  ]
+  calendar = {
+    mode: this.calendarModes[0].key,
+    currentDate: new Date()
+  }; // these are the variable used by the calendar.
+
+  taskType: { id: number, name: string }[] = [
+    { "id": 0, "name": "Routine" },
+    { "id": 1, "name": "Normal" },
+    { "id": 2, "name": "Important" }
+];
+  constructor( private storage: Storage,private alrtCtrl : AlertController, private actionSheetCtrl: ActionSheetController, public firebaseService: FirebaseService,public modalController: ModalController,private navController:NavController) {  }
   ngOnInit() 
   {
     console.log("Modal Start")
+    this.storage.get('user').then((val) => {
     this.firebaseService.viewTask().subscribe(result => {
-      this._tasks = result.map( e => {
+      this.task_pre_pop = result.map( e => {
         return {
           title: e.payload.doc.data()['title'],
           startTime: e.payload.doc.data()['startTime'],
           endTime: e.payload.doc.data()['endTime'],
           notes: e.payload.doc.data()['notes'],
-          taskConfirm : e.payload.doc.data()['taskConfirm']
+          taskConfirm : e.payload.doc.data()['taskConfirm'],
+          userId : e.payload.doc.data()['userId']
         };
         
-      })
+      }
+      
+      )
+        this.user_details.push(val)
+        for ( let filteredArray of this.task_pre_pop){
+          if(filteredArray.userId == val.id){
+            console.log("A")
+            console.log(filteredArray)
+              this._tasks.push(filteredArray)
+          }
+      }
+       
+
+
+      console.log(this._tasks)
       console.log(this._tasks.length);
       if ( this._tasks.length > 0){
         let events = this.eventSource;
@@ -83,32 +125,9 @@ export class ModalComponent implements OnInit {
       console.log('This part worked_2');
       }
     });
+    });
   
   }
-  
-  selectedDay = new Date()
-  sd : any;
-  selectedObject
-  eventSource = []
-  viewTitle;
-  isToday: boolean;
-  calendarModes = [
-    { key: 'month', value: 'Month' },
-    { key: 'week', value: 'Week' },
-    { key: 'day', value: 'Day' },
-  ]
-  calendar = {
-    mode: this.calendarModes[0].key,
-    currentDate: new Date()
-  }; // these are the variable used by the calendar.
-
-  taskType: { id: number, name: string }[] = [
-    { "id": 0, "name": "Routine" },
-    { "id": 1, "name": "Normal" },
-    { "id": 2, "name": "Important" }
-];
-  constructor(private alrtCtrl : AlertController, private actionSheetCtrl: ActionSheetController, public firebaseService: FirebaseService,public modalController: ModalController,private navController:NavController) {  }
-
   
   blockDay($event) {
     console.log($event)

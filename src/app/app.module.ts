@@ -17,12 +17,15 @@ import { NgCalendarModule } from 'ionic2-calendar';
 import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
 import { BackgroundMode } from '@ionic-native/background-mode/ngx';
 import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
+import { IonicStorageModule } from '@ionic/storage';
 
 
 @NgModule({
   declarations: [AppComponent,NotificationsComponent,ModalComponent],
   entryComponents: [NotificationsComponent,ModalComponent],
-  imports: [BrowserModule, IonicModule.forRoot(), 
+  imports: [BrowserModule ,
+    IonicModule.forRoot(),
+    IonicStorageModule.forRoot(),
     AngularFireModule.initializeApp(environment.firebase),
     AngularFirestoreModule,
     AppRoutingModule,
@@ -30,6 +33,7 @@ import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
     FormsModule,
     NgCalendarModule ,
     HttpClientModule,
+
   ],
   exports: [
 
@@ -39,11 +43,9 @@ import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
     StatusBar,
     SplashScreen,
     SpeechRecognition,
-
     LocalNotifications ,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    {provide: FirestoreSettingsToken,useValue:{}}
-
+    {provide: FirestoreSettingsToken,useValue:{}},
   ],
   bootstrap: [AppComponent]
 })

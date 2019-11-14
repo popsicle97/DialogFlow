@@ -21,12 +21,23 @@ export class FirebaseService {
       /*  return this.db.collection('task').add({
             name:value.name
             butt1:eaB.butt1,
-            butt2:meB.butt2,
+            butt2:meB.butt2,s
             butt3:haB.butt3,
             dat:daT.dat
         });*/
     }
     
+    trys(username,id,tasks){
+      return this.db.doc(username + "/" + id).set({task : tasks},{merge:true});
+    }
+    getUser(){
+      return this.db.collection('user').snapshotChanges();
+
+    }
+    addUser(username , id){
+      return this.db.doc("user/"+  id).set(username,{merge:true});
+
+    }
     viewTask(){
       return this.db.collection('task').snapshotChanges();
     }

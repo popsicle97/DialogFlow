@@ -5,5 +5,20 @@
 </ion-header>
 
 <ion-content>
+  <ion-item>
+      <ion-input  [(ngModel)]="username_input" placeholder="Give name" ></ion-input>
+    </ion-item>
+    <div><ion-label *ngIf = "empty == true">Must not be empty</ion-label></div> 
+<ion-item>
+        <ion-input  [(ngModel)]="useremail_input" placeholder="Give email" ></ion-input>
+</ion-item>
+<div><ion-label *ngIf = "validated == false">Email is empty or is incorrect format</ion-label></div>
+
+        <ion-button  (click) = "getName(username_input,useremail_input)"> Ok </ion-button>
+<ion-item>
+  <ion-label (click) = "syncAcc()">
+    Sync with existing account.
+</ion-label>
+</ion-item>
 
 </ion-content>

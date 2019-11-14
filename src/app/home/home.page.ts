@@ -9,11 +9,10 @@ import { FirebaseService } from './../services/firebase.service';
 import { ModalComponent } from '../modal/modal.component'; 
 import { Message, BotMessage} from '../chat/models/messages';
 import { NotificationsComponent } from '../notifications/notifications.component';
+import { Storage } from '@ionic/storage';
 import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
-import { analytics } from 'firebase';
 import { BackgroundMode } from '@ionic-native/background-mode/ngx';
 import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
-import { match } from 'minimatch';
 
 @Component({
   selector: 'app-home',
@@ -47,6 +46,10 @@ uc_counthtml: any= [];
 imp_counthtml : any = [];
 todays_task : any = [];
 voice : string = ' '
+user_details : any = [];
+task_pre_pop : any = []
+voice_array : any = [];
+
   event= {
     title : "",
     notes : "",
@@ -62,18 +65,20 @@ voice : string = ' '
     { "id": 2, "name": "Important" }
 ];
 
-  constructor(public backgroundMode: BackgroundMode,private localNotifications: LocalNotifications,
+  constructor(    private storage: Storage,
+    public backgroundMode: BackgroundMode,private localNotifications: LocalNotifications,
     public popoverController: PopoverController, 
     public modalController: ModalController, 
     public platform: Platform, 
     public formBuilder: FormBuilder,   
     private router: Router, 
     public firebaseService: FirebaseService,
-    private speechRecognition: SpeechRecognition
+    private speechRecognition: SpeechRecognition,
+    
     ) 
   
     { 
-    
+     
    // Check feature available
 this.speechRecognition.isRecognitionAvailable()
 .then((available: boolean) => console.log(available))
@@ -95,7 +100,8 @@ this.speechRecognition.isRecognitionAvailable()
   ngOnInit() {
 
     this.backgroundMode.enable();
-
+   
+   
     this.speechRecognition.hasPermission()
     .then((hasPermission: boolean) => {
 
@@ -108,23 +114,36 @@ this.speechRecognition.isRecognitionAvailable()
       }
 
    });
-
-
+   this.storage.get('user').then((val) => {
     this.firebaseService.viewTask().subscribe(result => {
-      this._tasks = result.map( e => {
-        return {
-          id:e.payload.doc.id,
-          isEdit : false,
-          title: e.payload.doc.data() ['title'],
-          notes : e.payload.doc.data()['notes'],
-          taskType : e.payload.doc.data()['taskType'],
-          startTime: e.payload.doc.data()['startTime'],
-          endTime : e.payload.doc.data()['endTime'],          
-          taskConfirm: e.payload.doc.data()['taskConfirm']
-        };
-      })
+      this.task_pre_pop=result.map( e=> {
+          return {
+            id:e.payload.doc.id,
+            title: e.payload.doc.data() ['title'],
+            notes : e.payload.doc.data()['notes'],
+            taskType : e.payload.doc.data()['taskType'],
+            startTime: e.payload.doc.data()['startTime'],
+            endTime : e.payload.doc.data()['endTime'],          
+            taskConfirm: e.payload.doc.data()['taskConfirm'],
+            userId : e.payload.doc.data()['userId']
+          };
+        }
+      );
+      console.log(this.task_pre_pop)
+      let user_task :any = [];
+      this.user_details.push(val)
+      for ( let filteredArray of this.task_pre_pop){
+        if(filteredArray.userId === val.id){
+          console.log("A")
+              user_task.push(filteredArray)
+        }
+    }
+     this._tasks = user_task
 
-     
+      console.log("THIS TASKS")
+      console.log(this._tasks)
+    
+
       let uc_count = [];
       let imp_count = [];
       let todays_count =[];
@@ -271,10 +290,14 @@ this.speechRecognition.isRecognitionAvailable()
 
         });
         this.addBotMessage("Boss, you have "+ uc_count.length + " unconfirmed task and " + imp_count.length + " important task");
-
+      });
     });
-     
-   
+
+  
+
+    
+ 
+
 
   }
 
@@ -382,20 +405,24 @@ this.speechRecognition.isRecognitionAvailable()
 }
 
   talk( ){
+    let a : any;
     this.speechRecognition.startListening()
     .subscribe(
       (matches: Array<string>) => {
-      //  this.sendMessage(matches[0])
-        console.log(matches[0])
-        this.voice = matches[0]
-        this.sendMessage(this.voice.toString())
+          console.log(matches[0])
+          a = matches[0]
+          this.voice_array.push(matches[0])
+          console.log("HELO")
+          this.sendMessage(matches[0])
+          console.log(this.voice_array)
 
       },
       
       (onerror) => console.log('error:', onerror)
       
       )
-      
+    
+   
 
   }
 
@@ -1178,7 +1205,8 @@ this.speechRecognition.isRecognitionAvailable()
           startTime: dt_start,
           endTime: dt_end,
           taskConfirm: response.result.parameters.task_status,
-      }
+          userId : this.user_details[0].id
+        }
 
         console.log(dt_start)
       
@@ -1209,7 +1237,8 @@ this.speechRecognition.isRecognitionAvailable()
         task.endTime = dt_start;
       }
       agentTask = task;
-    if(date_start_now_difference === 0 && !(timeH_start_now_difference < 0)  && !(timeM_start_now_different  < 0)){
+    if(date_start_now_difference >= 0 && timeH_start_now_difference >= 0  && timeM_start_now_different  >= 0){
+        console.log("Not in the past")
       if(task_same_date.length <= 0){
         task_status = response.result.parameters.task_status;
         //task_status = true;
@@ -1230,8 +1259,8 @@ this.speechRecognition.isRecognitionAvailable()
       task_status = "";
       this.addBotMessage("There is already a task occupying that time and date. Would you still want to add it?")
     }
-  }else if(date_start_now_difference <= 0 && (timeH_start_now_difference < 0)  && (timeM_start_now_different  < 0)){
-    this.addBotMessage("You cannot go back to time and add a class. Try again.")
+  }else if(date_start_now_difference <= 0 && timeH_start_now_difference <=0 && timeM_start_now_different  < 0){
+    this.addBotMessage("You cannot go back to time and add a task. Try again.")
   }
         console.log(task);
       }
@@ -1270,6 +1299,7 @@ this.speechRecognition.isRecognitionAvailable()
           startTime: dt_start,
           endTime: dt_end,
           taskConfirm: response.result.parameters.task_status,
+          userId : this.user_details[0].id
       }
 
         agentTask = task;
