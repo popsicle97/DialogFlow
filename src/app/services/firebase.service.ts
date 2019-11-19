@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/firestore';
+import * as moment from 'moment';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +17,7 @@ export class FirebaseService {
     constructor(public db: AngularFirestore) {
 
     }
+    
     createTask(tasks){
         return this.db.collection('task').add(tasks);
       /*  return this.db.collection('task').add({
@@ -25,6 +27,9 @@ export class FirebaseService {
             butt3:haB.butt3,
             dat:daT.dat
         });*/
+    }
+    createSideTask(tasks){
+      return this.db.collection('side_task').add(tasks);
     }
     
     trys(username,id,tasks){
@@ -41,9 +46,18 @@ export class FirebaseService {
     viewTask(){
       return this.db.collection('task').snapshotChanges();
     }
+    viewSideTask(){
+      var now = moment().format()
+      return this.db.collection('side_task').snapshotChanges();
+
+    }
 
     updateTask(tasksID,tasks){
-        this.db.doc('task/' + tasksID).update(tasks);
+       return  this.db.doc('task/' + tasksID).update(tasks);
+    }
+    updateSideTask(tasksID, tasks){
+      return this.db.doc('side_task/' + tasksID).update(tasks);
+
     }
     
     deleteTask(tasksID){

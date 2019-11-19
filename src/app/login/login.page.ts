@@ -22,9 +22,8 @@ export class LoginPage implements OnInit {
   exist : boolean = false;
   emailRegx: any;
 
-  constructor(public alertController: AlertController,private storage : Storage,    public firebaseService: FirebaseService ,private router : Router  )
+  constructor(public alertController: AlertController,private storage : Storage,    public firebaseService: FirebaseService ,private router : Router , )
   {
-    
 
   }
 
@@ -39,7 +38,8 @@ export class LoginPage implements OnInit {
 
     });
 */
-  
+
+ 
 
     this.storage.get('user').then((val) => {
       this.firebaseService.getUser().subscribe(result => {
@@ -61,7 +61,7 @@ export class LoginPage implements OnInit {
             if(val.id == user.id){
               console.log("exist")
               console.log(val.email)
-             // this.router.navigate(['/home'])
+             this.router.navigate(['/home'])
 
             }else{
               console.log("You are not registered in the database. Please provide username and email")
@@ -96,12 +96,26 @@ async presentAlert() {
       console.log(JSON.stringify(data)); //to see the object
       console.log(data.email);
       console.log(regexp.test(data.email));
+      for(let users of this.users){
+          if(users.email == data.email){
+            let data = {name : users.name,email : users.email, id:users.id}
+            this.storage.set('user', data)
+            console.log("SYNC SUCCESSFULL")
+            this.router.navigate(['/home'])
+
+          }else{
+
+            console.log("E-mail had not been registered in this app before.")
+          }
+      }
   }}]
   });
 
   await alert.present();
 }
 syncAcc(){
+ 
+
   this.presentAlert()
   console.log("Syncing account")
   

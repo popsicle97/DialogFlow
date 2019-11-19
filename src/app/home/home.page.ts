@@ -1,5 +1,5 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
-import { Platform,  IonContent, PopoverController, ModalController } from '@ionic/angular';
+import { Platform,  IonContent, PopoverController, ModalController ,AlertController} from '@ionic/angular';
 import * as moment from 'moment';
 import { ApiAiClient } from 'api-ai-javascript/es6/ApiAiClient'
 import { VERSION } from '@angular/core';
@@ -13,6 +13,8 @@ import { Storage } from '@ionic/storage';
 import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
 import { BackgroundMode } from '@ionic-native/background-mode/ngx';
 import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
+import { Vibration } from '@ionic-native/vibration/ngx';
+import { Alert } from 'selenium-webdriver';
 
 @Component({
   selector: 'app-home',
@@ -48,6 +50,7 @@ todays_task : any = [];
 voice : string = ' '
 user_details : any = [];
 task_pre_pop : any = []
+side_task_pre_pop : any = [];
 voice_array : any = [];
 
   event= {
@@ -68,12 +71,15 @@ voice_array : any = [];
   constructor(    private storage: Storage,
     public backgroundMode: BackgroundMode,private localNotifications: LocalNotifications,
     public popoverController: PopoverController, 
+    public alertController : AlertController,
     public modalController: ModalController, 
     public platform: Platform, 
     public formBuilder: FormBuilder,   
     private router: Router, 
     public firebaseService: FirebaseService,
     private speechRecognition: SpeechRecognition,
+    private vibration: Vibration,
+
     
     ) 
   
@@ -101,7 +107,7 @@ this.speechRecognition.isRecognitionAvailable()
 
     this.backgroundMode.enable();
    
-   
+
     this.speechRecognition.hasPermission()
     .then((hasPermission: boolean) => {
 
@@ -115,6 +121,66 @@ this.speechRecognition.isRecognitionAvailable()
 
    });
    this.storage.get('user').then((val) => {
+   this.firebaseService.viewSideTask().subscribe(result => {
+      this.side_task_pre_pop = result.map(e=>{
+          return {
+            id : e.payload.doc.id,
+            time_requested : e.payload.doc.data()['time_requested'],
+            time_new_duration: e.payload.doc.data()['time_new_duration'],
+            time_unit : e.payload.doc.data()['time_unit'],
+            title : e.payload.doc.data()['title'],
+            userId : e.payload.doc.data()['userId'],
+            duration : e.payload.doc.data()['duration']
+
+          };
+      });
+      console.log("SIDE TASKS")
+      console.log(this.side_task_pre_pop)
+      let user_side_task : any = []
+      let user_side_task_m : any = []
+      for ( let filteredArray of this.side_task_pre_pop){
+        if(filteredArray.userId === val.id){
+          console.log("B")
+              user_side_task.push(filteredArray)
+        }
+    }
+    for(let sideTask of user_side_task){
+      if(sideTask.time_unit === "minute"){
+        user_side_task_m.push(sideTask)
+        let getDate_fb = new Date(moment(sideTask.time_requested).format()),
+        month = getDate_fb.getMonth() + 1,
+        day = getDate_fb.getDate(),
+        year = getDate_fb.getFullYear(),
+        hour = getDate_fb.getHours(),
+        minute = getDate_fb.getMinutes()
+        for(let sideTask_m of user_side_task_m){
+          let time_diff = moment(sideTask_m.time_new_duration).diff(moment().format(),'minutes');
+          console.log(time_diff)
+          //task['time_new_duration'] =  moment(sideTask.time_requested).add(sideTask.duration,'minute').format()
+            console.log(sideTask_m.id +" ||| " +  moment(sideTask_m.time_new_duration).add(sideTask_m.duration,'minute').format())
+            if(sideTask_m.time_requested === sideTask_m.time_new_duration){
+              let task = {}
+    
+              task['time_new_duration'] =  moment(sideTask_m.time_requested).add(sideTask_m.duration,'minute').format()
+              this.firebaseService.updateSideTask(sideTask.id, task)
+        }
+        if(time_diff <= 0){
+          let task = {}
+          console.log("PAST TIME")
+          task['time_new_duration'] =  moment(sideTask_m.time_new_duration).add(sideTask_m.duration,'minute').format()
+         this.delay(1000)
+          this.firebaseService.updateSideTask(sideTask_m.id, task)
+          this.addBotMessage("Remind to " + sideTask_m.title)
+          console.log("DOING IT LIVE")
+          
+        }
+          }
+     
+      }
+    }
+
+   
+    })
     this.firebaseService.viewTask().subscribe(result => {
       this.task_pre_pop=result.map( e=> {
           return {
@@ -256,7 +322,11 @@ this.speechRecognition.isRecognitionAvailable()
         console.log(todays_count)
         if(id <= todays_count.length){
           if(task.taskType == "important" ){
-            this.backgroundMode.moveToForeground()
+        
+           this.backgroundMode.moveToForeground()
+            this.vibration.vibrate([2000,1000,2000]);
+            this.presentAlertConfirm("Important task detected today", "You have an important task to tend to today", "Ok")
+           
             console.log("TODAY IMPORTANT")
             this.localNotify(
               id,
@@ -268,6 +338,14 @@ this.speechRecognition.isRecognitionAvailable()
             
           }
           if(task.taskType == "normal"){
+            let time_diff = moment(moment(task.startTime).format()).diff(moment().format(),'minute');
+            console.log("NORMAL TASK")
+            console.log(time_diff)
+            if(time_diff == 0){
+              return this.backgroundMode.moveToForeground()
+              console.log(task.title)
+            }
+            this.vibration.vibrate(1000);
             this.localNotify(
               id,
               "You have a task to tend to today Amery.",
@@ -277,6 +355,8 @@ this.speechRecognition.isRecognitionAvailable()
           }
         
           if(task.taskType =="routine"){
+            //this.backgroundMode.moveToForeground()
+            this.vibration.vibrate(2000);
             this.localNotify(
               id,
               "There is a routine task today.",
@@ -291,13 +371,14 @@ this.speechRecognition.isRecognitionAvailable()
         });
         this.addBotMessage("Boss, you have "+ uc_count.length + " unconfirmed task and " + imp_count.length + " important task");
       });
+          //this.addBotMessage("Boss, you have "+ this.uc_counthtml.length + " unconfirmed task and " + this.imp_counthtml.length + " important task");
+
     });
 
   
 
     
  
-
 
   }
 
@@ -311,7 +392,9 @@ this.speechRecognition.isRecognitionAvailable()
       lockscreen: true,
       foreground: true,
       vibrate: true,
-      priority : priority
+      priority : priority,
+      trigger: {every : {minute : 1}},
+
     });
   }
 
@@ -334,13 +417,41 @@ this.speechRecognition.isRecognitionAvailable()
      
     });
   }
-  
+  async presentAlertConfirm(header,message,btn) {
+
+    const alert = await this.alertController.create({
+      header: header,
+      message: message,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          cssClass: 'secondary',
+          handler: (blah) => {
+            console.log('Confirm Cancel: blah');
+          }
+        }, {
+          text: btn,
+          handler: () => {
+            console.log('Confirm Okay');
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+
+  }
+
   async presentPopover(ev: any) {
+    
     const popover = await this.popoverController.create({
+      
       component: NotificationsComponent,
       event: ev,
       translucent: true
     });
+
     return await popover.present();
   }
 
@@ -352,7 +463,7 @@ this.speechRecognition.isRecognitionAvailable()
   }
 
 
-  taskAdd(req: string = "Add Task"){
+ /* taskAdd(req: string = "Add Task"){
     this.client.textRequest(req).then(response=>{
           const {task_titles, date } = response.result.parameters;
           console.log(task_titles)
@@ -367,7 +478,7 @@ this.speechRecognition.isRecognitionAvailable()
     this.client
       .textRequest(req)
       .then(response => {
-        /* do something */
+        /* do something 
         if (req ==='Add Task'){
         this.hiddenButton = false;
          this.showButton = true;
@@ -391,20 +502,20 @@ this.speechRecognition.isRecognitionAvailable()
        
       })
       .catch(error => {
-        /* do something here too */
+        /* do something here too 
         console.log('error');
         console.log(error);
       });
 
     this.chatBox = '';
-  }
+  }*/
 
 
   delay(ms: number) {
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
 
-  talk( ){
+ /* talk( ){
     let a : any;
     this.speechRecognition.startListening()
     .subscribe(
@@ -424,7 +535,7 @@ this.speechRecognition.isRecognitionAvailable()
     
    
 
-  }
+  }*/
 
 
   sendMessage(req: string) 
@@ -442,18 +553,7 @@ this.speechRecognition.isRecognitionAvailable()
       .textRequest(req)
       .then(async response => {
         /* do something */
-        let function_opener = response.result.parameters.function_opener;
-        let function_content = response.result.parameters.function_content;
-        if(function_opener != ""){
-          console.log("FUNCTION OPENER DETECTED!")
-          console.log(function_opener)
-          console.log(function_content)
-          if(function_opener == "open"&&function_content == "calender"){
-              this.presentModal();
-          }else if(function_opener == "open"&&function_content == "unconfirmed task"){
-              this.presentPopover(null);
-          }
-        }
+
         if(response.result.metadata.intentName == "task.add.update"){
            console.log("update intent")
            console.log(response);
@@ -567,6 +667,38 @@ this.speechRecognition.isRecognitionAvailable()
                 task_arr = [ ];
               }
               
+          }
+          else if (response.result.metadata.intentName == "task.events"){
+            const event = response.result.parameters.event;
+            const _time_ = response.result.parameters.time;
+            const duration  = response.result.parameters.duration;
+            let now = new Date()
+            let getDate_now = new Date(moment(now).format()),
+                  month_nw = getDate_now.getMonth() + 1,
+                  day_nw = getDate_now.getDate(),
+                  year_nw = getDate_now.getFullYear(),
+                  hour_nw = getDate_now.getHours(),
+                  minute_nw = getDate_now.getMinutes()
+           let combined_date_now = day_nw + "-"+ month_nw + "-" + year_nw
+           let date_now = moment(getDate_now, "YYYY-MM-DD HH:mm").format()
+            let side_task = {
+              title :event,
+              time_unit : _time_,
+              duration : duration,
+              userId : this.user_details[0].id,
+              time_requested : date_now,
+              time_new_duration : date_now,
+            }
+            console.log(event)
+            console.log(_time_)
+            console.log(duration)
+            console.log("DATE NOW")
+            console.log(date_now)
+            console.log(response)
+           this.addtoDB_side(side_task);
+            this.addBotMessage(response.result.fulfillment.speech)
+
+         
           }
           else if(response.result.metadata.intentName == "task.add.delete"){
             console.log(response)
@@ -1317,7 +1449,17 @@ this.speechRecognition.isRecognitionAvailable()
         this.addtoDB(agentTask);
         }
         
-      }else{
+      }
+      else if(response.result.metadata.intentName =="task.events"){
+        let event_action = response.result.parameters.event;
+        let time =  response.result.parameters.time;
+        let duration = response.result.parameters.duration;
+        
+        console.log(response)
+        this.addBotMessage(response.result.fulfillment.speech)
+
+      }
+      else{
               console.log('res');
               console.log('taskname');
               console.log(response);
@@ -1422,6 +1564,17 @@ this.speechRecognition.isRecognitionAvailable()
           console.log('Agent----->FB');
           console.log('This part worked_2');
           this.taskN = "";
+          console.log(res);
+
+        }
+      )
+    }
+    addtoDB_side(data){
+      this.firebaseService.createSideTask(data)
+      .then(
+        res=>{
+          console.log('Agent----->FB');
+          console.log('Side tasks added');
           console.log(res);
 
         }

@@ -18,6 +18,7 @@ import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
 import { BackgroundMode } from '@ionic-native/background-mode/ngx';
 import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
 import { IonicStorageModule } from '@ionic/storage';
+import { Vibration } from '@ionic-native/vibration/ngx';
 
 
 @NgModule({
@@ -39,6 +40,7 @@ import { IonicStorageModule } from '@ionic/storage';
 
   ],
   providers: [
+    Vibration,
     BackgroundMode,
     StatusBar,
     SplashScreen,
